@@ -7,16 +7,14 @@ Contribution Guides
 In the spirit of open source software development, jQuery always encourages community code contribution. To help you get started and before you jump into writing code, be sure to read these important contribution guidelines thoroughly:
 
 1. [Getting Involved](https://contribute.jquery.org/)
-2. [Core Style Guide](https://contribute.jquery.org/style-guide/js/)
-3. [Writing Code for jQuery Foundation Projects](https://contribute.jquery.org/code/)
-
+1. [Core Style Guide](https://contribute.jquery.org/style-guide/js/)
+1. [Writing Code for jQuery Foundation Projects](https://contribute.jquery.org/code/)
 
 Environments in which to use jQuery
 --------------------------------------
 
 - [Browser support](https://jquery.com/browser-support/)
 - jQuery also supports Node, browser extensions, and other non-browser environments.
-
 
 What you need to build your own jQuery
 --------------------------------------
