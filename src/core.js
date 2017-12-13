@@ -56,6 +56,7 @@ define([
 		// 记录版本号
 		jquery: version,
 
+		//构造函数
 		constructor: jQuery,
 
 		// The default length of a jQuery object is 0
@@ -100,6 +101,7 @@ define([
 		},
 
 		// Execute a callback for every element in the matched set.
+		// 遍历jquery自身的所有元素
 		each: function (callback) {
 			return jQuery.each(this, callback);
 		},
@@ -141,10 +143,11 @@ define([
 
 	//公有静态方法
 	//扩展jQuery对象
-	// 参看文档：接受object参数
+	// 参看文档：接受多个参数参数
+	// http://api.jquery.com/jQuery.extend/
 	jQuery.extend = jQuery.fn.extend = function () {
 		var options, name, src, copy, copyIsArray, clone,
-			target = arguments[0] || {}, //默认只接受一个对象作为参数
+			target = arguments[0] || {}, //第一个参数可为布尔类型，也可以为目标对象
 			i = 1,
 			length = arguments.length,
 			deep = false;
@@ -155,7 +158,7 @@ define([
 			deep = target;
 
 			// Skip the boolean and the target
-			// 获取第二个参数，作为输入的对象
+			// 获取第二个参数，作为目标对象
 			target = arguments[i] || {};
 			i++; //这里提前自加1，为了后面判断是否为一个参数，只有为第一个参数为布尔值才自加1，**切记**
 		}
@@ -224,41 +227,54 @@ define([
 		return target;
 	};
 
-
+    //这里直接用扩展函数，来扩展jquery的方法
 	jQuery.extend({
 
 		// Unique for each copy of jQuery on the page
+		// 保证该jquery对象的唯一性，通过在主版本上加上一个随机数，然后通过正则表达式，替换掉非数字部分
+		// Math.random: https://developer.mozilla.org/zh-CN/docs/Web/JavaScript/Reference/Global_Objects/Math/random
+		// String.replace: https://developer.mozilla.org/zh-CN/docs/Web/JavaScript/Reference/Global_Objects/String/replace
 		expando: "jQuery" + (version + Math.random()).replace(/\D/g, ""),
 
 		// Assume jQuery is ready without the ready module
 		isReady: true,
 
+		//报错则直接抛出异常
 		error: function (msg) {
 			throw new Error(msg);
 		},
 
+		//空方法，什么都不做
 		noop: function () {},
 
+		//判断是否为函数
 		isFunction: function (obj) {
 
 			// Support: Chrome <=57, Firefox <=52
 			// In some browsers, typeof returns "function" for HTML <object> elements
 			// (i.e., `typeof document.createElement( "object" ) === "function"`).
 			// We don't want to classify *any* DOM node as a function.
+			// 【兼容处理】 IE浏览器下部分节点的类型判断为function，因此要过滤掉这部分
+			// nodetype 是节点类型 用来判断节点是哪种类型： https://developer.mozilla.org/zh-CN/docs/Web/API/Node/nodeType
 			return typeof obj === "function" && typeof obj.nodeType !== "number";
 		},
 
+		//判断是否为数值类型
 		isNumeric: function (obj) {
 
 			// As of jQuery 3.0, isNumeric is limited to
 			// strings and numbers (primitives or objects)
 			// that can be coerced to finite numbers (gh-2662)
+			// jquery3.0之后，改方法限制在数值和字符串类型中使用
 			var type = jQuery.type(obj);
 			return (type === "number" || type === "string") &&
 
 				// parseFloat NaNs numeric-cast false positives ("")
 				// ...but misinterprets leading-number strings, particularly hex literals ("0x...")
 				// subtraction forces infinities to NaN
+				// parseFloat 能够有效的解决字符串不符合的问题，如‘abc’,经过parseFloat之后，得到NaN
+				// NaN进行加减运算仍得到NaN
+				// 通过isNaN方法，做最后的检测，确定不是NaN
 				!isNaN(obj - parseFloat(obj));
 		},
 
@@ -301,12 +317,17 @@ define([
 			return true;
 		},
 
+		//获取对象的类型
+		// https://www.jquery123.com/jQuery.type/ 贴个中文网址吧，外网比较慢
 		type: function (obj) {
+			// 对象为null 直接返回null
 			if (obj == null) {
 				return obj + "";
 			}
 
 			// Support: Android <=2.3 only (functionish RegExp)
+			// 低版本的安卓内，正则表达式类型会判断为function
+			// 类型在之前已经生成到class2type中，这里根据类型字符串直接映射出类型
 			return typeof obj === "object" || typeof obj === "function" ?
 				class2type[toString.call(obj)] || "object" :
 				typeof obj;
@@ -324,6 +345,7 @@ define([
 			return string.replace(rmsPrefix, "ms-").replace(rdashAlpha, fcamelCase);
 		},
 
+		//遍历数组或者对象
 		each: function (obj, callback) {
 			var length, i = 0;
 
@@ -484,11 +506,15 @@ define([
 	}
 
 	// Populate the class2type map
+	// 将转换类型生成并存储在class2type中
 	jQuery.each("Boolean Number String Function Array Date RegExp Object Error Symbol".split(" "),
 		function (i, name) {
 			class2type["[object " + name + "]"] = name.toLowerCase();
 		});
 
+	//注意这是个内部函数，方法不公开
+	//判断一个对象是否为类数组
+	//类数组的特点是具有length属性
 	function isArrayLike(obj) {
 
 		// Support: real iOS 8.2 only (not reproducible in simulator)
@@ -498,10 +524,13 @@ define([
 		var length = !!obj && "length" in obj && obj.length,
 			type = jQuery.type(obj);
 
+		//函数和window对象均拜拜
 		if (jQuery.isFunction(obj) || isWindow(obj)) {
 			return false;
 		}
-
+		//数组肯定满足
+		//长度为1时，则当做含有一个元素的类数组
+		//其他情况下，length属性必须为数值类型，且长度大约0，且可以通过索引访问（length-1 是对象的一个属性）
 		return type === "array" || length === 0 ||
 			typeof length === "number" && length > 0 && (length - 1) in obj;
 	}
