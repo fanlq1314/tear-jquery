@@ -37,6 +37,9 @@ define([
 
 		// Support: Android <=4.0 only
 		// Make sure we trim BOM and NBSP
+		// \uFEFF指的是ES5新增的空白符，字节次序标记字符Byte Order Mark（BOM） 低版本的浏览器中无法过滤
+		// ES5之后增加了trim方法
+		// \xA0指的是零宽不换行空格Zero Width No-Break Space （NBSP）低版本浏览器无法过滤
 		rtrim = /^[\s\uFEFF\xA0]+|[\s\uFEFF\xA0]+$/g,
 
 		// Matches dashed string for camelizing
@@ -310,7 +313,7 @@ define([
 			/* eslint-disable no-unused-vars */
 			// See https://github.com/eslint/eslint/issues/6125
 			var name;
-
+			//遍历对象属性，一旦存在，则不是空对象
 			for (name in obj) {
 				return false;
 			}
@@ -334,6 +337,7 @@ define([
 		},
 
 		// Evaluates a script in a global context
+		// 这个方法将在DOMEval中解析
 		globalEval: function (code) {
 			DOMEval(code);
 		},
@@ -341,7 +345,12 @@ define([
 		// Convert dashed to camelCase; used by the css and data modules
 		// Support: IE <=9 - 11, Edge 12 - 15
 		// Microsoft forgot to hump their vendor prefix (#9572)
+		// 在js中控制样式时，要将连字符形式，转换为驼峰式，因此要专门做一个驼峰转换形式，并不是一般意义上的驼峰转换
 		camelCase: function (string) {
+			//对于微软前缀进行修正-ms-替换为ms- 替换后，字符串变为 ms-xxxx-xxxx
+			//然后对返回的字符串中对 -x 替换为 -X 这样就完成了驼峰转换
+			//这里用到了replace函数的一个特殊回调形式 第一个参数为匹配的字串 第二个参数表示第一个（）部分匹配的字符串
+			//参见 https://developer.mozilla.org/zh-CN/docs/Web/JavaScript/Reference/Global_Objects/String/replace
 			return string.replace(rmsPrefix, "ms-").replace(rdashAlpha, fcamelCase);
 		},
 
@@ -349,6 +358,7 @@ define([
 		each: function (obj, callback) {
 			var length, i = 0;
 
+			//类数组按照数组方式处理
 			if (isArrayLike(obj)) {
 				length = obj.length;
 				for (; i < length; i++) {
@@ -357,6 +367,7 @@ define([
 					}
 				}
 			} else {
+				//对象则遍历所有属性
 				for (i in obj) {
 					if (callback.call(obj[i], i, obj[i]) === false) {
 						break;
@@ -368,6 +379,9 @@ define([
 		},
 
 		// Support: Android <=4.0 only
+		// 快速将其他类型转换为字符串的方法： ''+变量
+		// 直接通过replace方法将空格去除
+		// 如果用嗅探的方式，其实可以先判断是否存在String.prototype.trim方法
 		trim: function (text) {
 			return text == null ?
 				"" :
@@ -375,15 +389,18 @@ define([
 		},
 
 		// results is for internal usage only
+		// 以results为基础，arr为源数据，返回一个数组
 		makeArray: function (arr, results) {
 			var ret = results || [];
 
 			if (arr != null) {
 				if (isArrayLike(Object(arr))) {
+					//是类数组，则进行合并
 					jQuery.merge(ret,
 						typeof arr === "string" ? [arr] : arr
 					);
 				} else {
+					//不是类数组，则直接作为元素追加到后面
 					push.call(ret, arr);
 				}
 			}
@@ -391,17 +408,19 @@ define([
 			return ret;
 		},
 
+		//判断元素是否在数组中 -1表示不存在
 		inArray: function (elem, arr, i) {
 			return arr == null ? -1 : indexOf.call(arr, elem, i);
 		},
 
 		// Support: Android <=4.0 only, PhantomJS 1 only
 		// push.apply(_, arraylike) throws on ancient WebKit
+		// 合并类数组对象
 		merge: function (first, second) {
 			var len = +second.length,
 				j = 0,
 				i = first.length;
-
+			//first从末尾开始追加
 			for (; j < len; j++) {
 				first[i++] = second[j];
 			}
@@ -411,6 +430,8 @@ define([
 			return first;
 		},
 
+		//参看文档：https://www.jquery123.com/jQuery.grep/
+		//查找满足条件的元素，比较简单直观，不做太多介绍了
 		grep: function (elems, callback, invert) {
 			var callbackInverse,
 				matches = [],
@@ -431,6 +452,9 @@ define([
 		},
 
 		// arg is for internal usage only
+		// 映射操作
+		// 需要注意的是，方法返回一个新数组，并非在原数组中操作
+		// 另外，即使输入的是对象，返回的也依然是数组
 		map: function (elems, callback, arg) {
 			var length, value,
 				i = 0,
@@ -441,7 +465,7 @@ define([
 				length = elems.length;
 				for (; i < length; i++) {
 					value = callback(elems[i], i, arg);
-
+                    //如果返回值为null 则不追加到结果中
 					if (value != null) {
 						ret.push(value);
 					}
@@ -451,7 +475,7 @@ define([
 			} else {
 				for (i in elems) {
 					value = callback(elems[i], i, arg);
-
+					//如果返回值为null 则不追加到结果中
 					if (value != null) {
 						ret.push(value);
 					}
@@ -463,13 +487,16 @@ define([
 		},
 
 		// A global GUID counter for objects
+		// 一般为了保证某些唯一性要求，都会设计一个guid计数，保证唯一性
 		guid: 1,
 
 		// Bind a function to a context, optionally partially applying any
 		// arguments.
+		// 代理函数
 		proxy: function (fn, context) {
 			var tmp, args, proxy;
 
+			//简单交换
 			if (typeof context === "string") {
 				tmp = fn[context];
 				context = fn;
@@ -483,12 +510,16 @@ define([
 			}
 
 			// Simulated bind
+			// 解析剩余的参数
 			args = slice.call(arguments, 2);
 			proxy = function () {
+				//将上下文设定为指定上下文，如果没有，则绑定调用方（注意this的引用原理，百度一下）
+				//将原有方法的剩余参数，和新生成方法的参数，合成一个数组，进行调用
 				return fn.apply(context || this, args.concat(slice.call(arguments)));
 			};
 
 			// Set the guid of unique handler to the same of original handler, so it can be removed
+			// 保证代理的唯一性
 			proxy.guid = fn.guid = fn.guid || jQuery.guid++;
 
 			return proxy;
@@ -498,9 +529,12 @@ define([
 
 		// jQuery.support is not used in Core but other projects attach their
 		// properties to it so it needs to exist.
+		// 保留属性，在其他地方会用到
 		support: support
 	});
 
+	//ES6新特性 迭代器，如果支持es6新特性，将jquery的迭代器设置为数组的迭代器，则jquery就具有可迭代的功能了
+	// 如果不是特别明白，需要了解一下ES6的新特性。推荐（http://es6.ruanyifeng.com/#README）
 	if (typeof Symbol === "function") {
 		jQuery.fn[Symbol.iterator] = arr[Symbol.iterator];
 	}
@@ -514,7 +548,8 @@ define([
 
 	//注意这是个内部函数，方法不公开
 	//判断一个对象是否为类数组
-	//类数组的特点是具有length属性
+	//类数组的特点是具有length属性且length大于0
+	//因为类数组的判断不能百分百准确，因此不公开此方法
 	function isArrayLike(obj) {
 
 		// Support: real iOS 8.2 only (not reproducible in simulator)
