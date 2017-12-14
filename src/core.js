@@ -1,4 +1,7 @@
 /* global Symbol */
+//顶部这句是eslint的声明
+//表示global后面的变量都是全局存在的，eslint可以过滤掉其未定义错误
+
 // Defining this global in .eslintrc.json would create a danger of using the global
 // unguarded in another place, it seems safer to define global only for this module
 
