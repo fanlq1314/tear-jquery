@@ -1,3 +1,4 @@
+//该模块主要定义了 遍历功能
 define( [
 	"./core",
 	"./var/indexOf",
@@ -23,11 +24,14 @@ var rparentsprev = /^(?:parents|prev(?:Until|All))/,
 		prev: true
 	};
 
+// 这里的方法全部增加的jquery的原型中，所以属于实例方法
 jQuery.fn.extend( {
+	//是否含有指定元素
 	has: function( target ) {
 		var targets = jQuery( target, this ),
 			l = targets.length;
 
+		// 遍历元素，只要有元素包含，则返回true
 		return this.filter( function() {
 			var i = 0;
 			for ( ; i < l; i++ ) {
@@ -38,6 +42,7 @@ jQuery.fn.extend( {
 		} );
 	},
 
+	//获取最近的符合选择器的祖先元素
 	closest: function( selectors, context ) {
 		var cur,
 			i = 0,
@@ -69,6 +74,7 @@ jQuery.fn.extend( {
 	},
 
 	// Determine the position of an element within the set
+	// 返回元素在集合中的索引值
 	index: function( elem ) {
 
 		// No argument, return index in parent
@@ -112,9 +118,11 @@ function sibling( cur, dir ) {
 jQuery.each( {
 	parent: function( elem ) {
 		var parent = elem.parentNode;
+		// nodeType 不为11（DocumentFragment）
 		return parent && parent.nodeType !== 11 ? parent : null;
 	},
 	parents: function( elem ) {
+		//
 		return dir( elem, "parentNode" );
 	},
 	parentsUntil: function( elem, i, until ) {
@@ -139,19 +147,23 @@ jQuery.each( {
 		return dir( elem, "previousSibling", until );
 	},
 	siblings: function( elem ) {
+		//自身的第一个兄弟元素开始的，所有同级兄弟元素
 		return siblings( ( elem.parentNode || {} ).firstChild, elem );
 	},
 	children: function( elem ) {
+		//从第一个子元素开始的 所有同级兄弟元素
 		return siblings( elem.firstChild );
 	},
 	contents: function( elem ) {
+		//对于iframe 返回其内部的document
         if ( nodeName( elem, "iframe" ) ) {
             return elem.contentDocument;
         }
 
         // Support: IE 9 - 11 only, iOS 7 only, Android Browser <=4.3 only
         // Treat the template element as a regular one in browsers that
-        // don't support it.
+		// don't support it.
+		// 对于template元素，则先取内部的content
         if ( nodeName( elem, "template" ) ) {
             elem = elem.content || elem;
         }
@@ -159,7 +171,9 @@ jQuery.each( {
         return jQuery.merge( [], elem.childNodes );
 	}
 }, function( name, fn ) {
+	//将所有定义的元素映射到原型方法中
 	jQuery.fn[ name ] = function( until, selector ) {
+		//这里的this仍指向jquery对象
 		var matched = jQuery.map( this, fn, until );
 
 		if ( name.slice( -5 ) !== "Until" ) {
@@ -178,6 +192,8 @@ jQuery.each( {
 			}
 
 			// Reverse order for parents* and prev-derivatives
+			// 对于父元素或者向前遍历的方法，其匹配结果需要做一下反向
+			// 因为所有方法都是通过正向去做遍历的
 			if ( rparentsprev.test( name ) ) {
 				matched.reverse();
 			}
